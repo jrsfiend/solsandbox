@@ -55,6 +55,10 @@ pub struct ProxyOpenPosition<'info> {
   #[account(address = sysvar::recent_blockhashes::id())]
   /// CHECK:
   recent_blockhashes: AccountInfo<'info>,
+  /// CHECK: safe
+  #[account(init_if_needed, payer=funder,seeds = [b"authority"], bump)]
+  pub authority: Account<'info, Authority>,
+
 }
 
 use anchor_lang::error;

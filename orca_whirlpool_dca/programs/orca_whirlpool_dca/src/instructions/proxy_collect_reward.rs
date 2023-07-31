@@ -40,7 +40,7 @@ pub struct ProxyCollectReward<'info> {
 
   /// CHECK: safe
   #[account(seeds = [b"authority"], bump)]
-  pub authority: UncheckedAccount<'info>,
+  pub authority: Account<'info, Authority>,
 }
 
 pub fn handler(

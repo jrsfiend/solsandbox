@@ -5,7 +5,10 @@ pub const SEED_DCA: &[u8] = b"dca";
 /**
  * Dca
  */
-
+#[account]
+#[derive(Debug, TryFromData)]
+pub struct Authority {
+}
 #[account]
 #[derive(Debug, TryFromData)]
 pub struct Dca {

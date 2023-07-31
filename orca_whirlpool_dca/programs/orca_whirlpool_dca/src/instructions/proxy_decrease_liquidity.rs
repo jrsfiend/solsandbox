@@ -46,7 +46,7 @@ pub struct ProxyDecreaseLiquidity<'info> {
   pub tick_array_upper: UncheckedAccount<'info>,
   /// CHECK: safe
   #[account(seeds = [b"authority"], bump)]
-  pub authority: UncheckedAccount<'info>,
+  pub authority: Account<'info, Authority>,
 }
 
 pub fn handler(
