@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 use anchor_spl::{token::{self, Token, Mint, TokenAccount}, associated_token::{AssociatedToken}};
-use whirlpool::{self, state::*};
-
+use whirlpools::{self, state::*};
+use crate::state::Authority;
 use { 
   clockwork_sdk::{
       state::{Thread, ThreadAccount, ThreadResponse},
@@ -13,7 +13,7 @@ pub struct ProxyCollectReward<'info> {
 
   #[account(address = hydra.pubkey(), signer)]
   pub hydra: Account<'info, Thread>,
-  pub whirlpool_program: Program<'info, whirlpool::program::Whirlpool>,
+  pub whirlpool_program: Program<'info, whirlpools::program::Whirlpool>,
 
   pub whirlpool: Box<Account<'info, Whirlpool>>,
 
@@ -39,7 +39,7 @@ pub struct ProxyCollectReward<'info> {
   pub token_program: Program<'info, Token>,
 
   /// CHECK: safe
-  #[account(seeds = [b"authority"], bump)]
+  #[account(seeds = [b"authority", position.key().as_ref()], bump)]
   pub authority: Account<'info, Authority>,
 }
 
@@ -53,33 +53,35 @@ pub fn handler(
 
   let tick_lower_index = &whirlpool.tick_current_index
       - &whirlpool.tick_current_index % whirlpool.tick_spacing as i32
-      - whirlpool.tick_spacing as i32 * 2;
+      - whirlpool.tick_spacing as i32 * 1;
   let tick_upper_index = &whirlpool.tick_current_index
       - &whirlpool.tick_current_index % whirlpool.tick_spacing as i32
-      + whirlpool.tick_spacing as i32 * 2;
+      + whirlpool.tick_spacing as i32 * 1;
   let tlip = position.tick_lower_index;
   let tuip = position.tick_upper_index;
   // on start we init, hab a mint. we hab other mints lined up.
   if tlip < tick_lower_index || tuip > tick_upper_index {
     let cpi_program = ctx.accounts.whirlpool_program.to_account_info();
 
-    let cpi_accounts = whirlpool::cpi::accounts::CollectReward {
+    let cpi_accounts = whirlpools::cpi::accounts::CollectReward {
       whirlpool: ctx.accounts.whirlpool.to_account_info(),
       position_authority: ctx.accounts.authority.to_account_info(),
-      position: ctx.accounts.position.to_account_info(),
+      position: ctx.accounts.position.clone().to_account_info(),
       position_token_account: ctx.accounts.position_token_account.to_account_info(),
       reward_owner_account: ctx.accounts.reward_owner_account.to_account_info(),
       reward_vault: ctx.accounts.reward_vault.to_account_info(),
       token_program: ctx.accounts.token_program.to_account_info(),
     };
 
-    let authority_seeds = [b"authority".as_ref(), &[bump]];
+    
+    let key_ref = ctx.accounts.position.key();
+    let authority_seeds = [b"authority",key_ref.as_ref(), &[bump]];
     let signer_seeds = [authority_seeds.as_ref()];
     let cpi_ctx = CpiContext::new_with_signer(cpi_program, cpi_accounts, &signer_seeds);
 
     // execute CPI
     msg!("CPI: whirlpool collect_reward instruction");
-    whirlpool::cpi::collect_reward(cpi_ctx, reward_index)?;
+    whirlpools::cpi::collect_reward(cpi_ctx, reward_index)?;
   }
    Ok(ThreadResponse {
         next_instruction: None,

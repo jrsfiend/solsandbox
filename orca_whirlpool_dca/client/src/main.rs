@@ -71,7 +71,7 @@ fn dca_create(
         .get_account_data(&whirlpool_params.whirlpool)
         .unwrap();
     let whirlpool_state =
-        whirlpool::state::Whirlpool::try_deserialize(&mut whirlpool_data).unwrap();
+        whirlpools::state::whirlpools::try_deserialize(&mut whirlpool_data).unwrap();
 
     let dca_create_ix = Instruction {
         program_id: orca_whirlpool_dca::ID,

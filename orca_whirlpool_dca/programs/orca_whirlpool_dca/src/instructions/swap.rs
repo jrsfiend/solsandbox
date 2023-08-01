@@ -124,10 +124,10 @@ pub fn handler<'info>(ctx: Context<'_, '_, '_, 'info, Swap<'info>>) -> Result<()
         dca.amount
     )?;
 
-    whirlpool::cpi::swap(
+    whirlpools::cpi::swap(
         CpiContext::new_with_signer(
             orca_whirlpool_program.to_account_info(), 
-            whirlpool::cpi::accounts::Swap {
+            whirlpools::cpi::accounts::Swap {
                 token_program: token_program.to_account_info(),
                 token_authority: dca.to_account_info(),
                 whirlpool: whirlpool.to_account_info(),

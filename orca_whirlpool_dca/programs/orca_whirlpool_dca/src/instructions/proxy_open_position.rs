@@ -1,10 +1,12 @@
 use anchor_lang::{prelude::*, solana_program::{system_instruction, program::invoke}};
 use anchor_spl::{token::{self, Token}, associated_token::{AssociatedToken}};
-use whirlpool::{self, state::*};
-
+use whirlpools::{self, state::*};
+use crate::state::Authority;
 use anchor_lang::solana_program::clock;
 use std::collections::hash_map::DefaultHasher;
 use std::hash::{Hash, Hasher};
+use anchor_spl::token::Mint;
+use anchor_spl::token::TokenAccount;
 use anchor_lang::solana_program::sysvar;
 // Define for inclusion in IDL
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Default, Copy)]
@@ -15,7 +17,7 @@ pub struct OpenPositionBumps {
 #[derive(Accounts)]
 pub struct ProxyOpenPosition<'info> {
 
-  pub whirlpool_program: Program<'info, whirlpool::program::Whirlpool>,
+  pub whirlpool_program: Program<'info, whirlpools::program::Whirlpool>,
 
   #[account(mut)]
   pub funder: Signer<'info>,
@@ -40,6 +42,13 @@ pub struct ProxyOpenPosition<'info> {
   #[account(mut)]
   pub position_mint: Signer<'info>,
 
+  #[account()]
+  pub token_owner_account_a: Box<Account<'info, TokenAccount>>,
+  #[account( )]
+  pub token_owner_account_b: Box<Account<'info, TokenAccount>>,
+  pub mint_a: Box<Account<'info, Mint>>,
+  pub mint_b: Box<Account<'info, Mint>>,
+
   /// CHECK: init by whirlpool
   #[account(mut)]
   pub position_token_account: UncheckedAccount<'info>,
@@ -56,7 +65,7 @@ pub struct ProxyOpenPosition<'info> {
   /// CHECK:
   recent_blockhashes: AccountInfo<'info>,
   /// CHECK: safe
-  #[account(init_if_needed, payer=funder,seeds = [b"authority"], bump)]
+  #[account(init_if_needed, space=33, payer=funder,seeds = [b"authority", position.key().as_ref()], bump)]
   pub authority: Account<'info, Authority>,
 
 }
@@ -111,15 +120,15 @@ pub fn handler(
 
   let tick_lower_index = &whirlpool.tick_current_index
       - &whirlpool.tick_current_index % whirlpool.tick_spacing as i32
-      - whirlpool.tick_spacing as i32 * (last as i32 % 4);
+      - whirlpool.tick_spacing as i32 * 2;
   let tick_upper_index = &whirlpool.tick_current_index
       - &whirlpool.tick_current_index % whirlpool.tick_spacing as i32
-      + whirlpool.tick_spacing as i32 *  (last as i32 % 4);
+      + whirlpool.tick_spacing as i32 *  2;
      
-  let cpi_accounts = whirlpool::cpi::accounts::OpenPosition {
+  let cpi_accounts = whirlpools::cpi::accounts::OpenPosition {
     funder: ctx.accounts.funder.to_account_info(),
     owner: ctx.accounts.owner.to_account_info(),
-    position: ctx.accounts.position.to_account_info(),
+    position: ctx.accounts.position.clone().to_account_info(),
     position_mint: ctx.accounts.position_mint.to_account_info(),
     position_token_account: ctx.accounts.position_token_account.to_account_info(),
     whirlpool: ctx.accounts.whirlpool.to_account_info(),
@@ -133,9 +142,9 @@ pub fn handler(
 
   // execute CPI
   msg!("CPI: whirlpool open_position instruction");
-  whirlpool::cpi::open_position(
+  whirlpools::cpi::open_position(
     cpi_ctx,
-    whirlpool::typedefs::OpenPositionBumps { position_bump: bumps.position_bump },
+    whirlpools::typedefs::OpenPositionBumps { position_bump: bumps.position_bump },
     tick_lower_index,
     tick_upper_index,
   )?;

@@ -188,15 +188,6 @@ pub mod cpi_whirlpool_anchor_gen_v0250 {
     }
 
     /*
-     * get tick arrays for upcoming swap
-     */
-    pub fn get_tick_arrays<'info>(
-        ctx: Context<GetTickArrays<'info>>,
-    ) -> Result<clockwork_sdk::state::ThreadResponse> {
-        get_tick_arrays::handler(ctx)
-    }
-
-    /*
      * swap on orca whirlpool
      */
     pub fn swap<'info>(ctx: Context<'_, '_, '_, 'info, Swap<'info>>) -> Result<()> {

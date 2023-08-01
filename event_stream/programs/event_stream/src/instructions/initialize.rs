@@ -12,7 +12,7 @@ use {
     },
     std::mem::size_of,
 };
-
+use crate::state::Authority;
 #[derive(Accounts)]
 #[instruction(thread_id: Vec<u8>)]
 pub struct Initialize<'info> {

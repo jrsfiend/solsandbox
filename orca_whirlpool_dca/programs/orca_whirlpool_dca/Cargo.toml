@@ -21,5 +21,6 @@ anchor-lang = { version = "0.26.0", features = ["init-if-needed"] }
 anchor-spl = "0.26.0"
 clockwork-sdk = "1.4.2"
 clockwork-macros = "1.4.0"
+whirlpools = "*"
 whirlpool = { path = "../../crates/whirlpool" }
 arrayref = "*"

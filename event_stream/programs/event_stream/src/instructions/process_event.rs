@@ -3,7 +3,7 @@ use {
     anchor_lang::prelude::*,
     clockwork_sdk::state::Thread,
 };
-
+use crate::state::Authority;
 #[derive(Accounts)]
 pub struct ProcessEvent<'info> {
     #[account(address = Authority::pubkey())]
